@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Schiesstrainer</title>
+<meta name="theme-color" content="#13171b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Schiesstrainer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+button{-webkit-tap-highlight-color:transparent}
+
+/* Layout: eine Spalte, die Scheibe ist der Mittelpunkt, Bedienung darunter in Daumenreichweite */
+:root{
+  --bg:#e8ebed; --surface:#ffffff; --ink:#13171b; --muted:#5a636b; --line:#cdd3d8;
+  --called:#d4432a; --actual:#1c68cc; --good:#2b8551; --hi:#ffc21a;
+  --t-paper:#f4f3ee; --t-black:#17191b; --t-line-dark:#1b1b1b; --t-line-light:#dcdcd6;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1214; --surface:#181c20; --ink:#e6e9ec; --muted:#95a0a9; --line:#2a3137;
+  --called:#ef5d3d; --actual:#4a92ef; --good:#46b678; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1214; --surface:#181c20; --ink:#e6e9ec; --muted:#95a0a9; --line:#2a3137;
+  --called:#ef5d3d; --actual:#4a92ef; --good:#46b678; color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.4}
+.app{max-width:540px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:14px;
+  padding-block:12px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box}
+section{display:flex;flex-direction:column;gap:14px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.head h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:38px;line-height:1;text-wrap:balance}
+.head .sub{color:var(--muted);font-size:14px}
+.live{font-family:var(--f-display);font-weight:600;font-size:30px;line-height:1;font-variant-numeric:tabular-nums;text-align:right;min-width:4ch}
+.live small{display:block;font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.target{width:100%;max-width:min(100%,58vh);aspect-ratio:1;margin:0 auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.target svg{width:100%;height:100%;display:block;border-radius:6px;cursor:crosshair}
+.mk circle.dot{stroke:#fff;stroke-width:.6}
+.mk.called circle.dot{fill:var(--called)}
+.mk.actual circle.dot{fill:var(--actual)}
+.mk.ghost{opacity:.75}
+.mk text{fill:#fff;font-family:var(--f-display);font-weight:700;font-size:3.8px;pointer-events:none}
+.mk circle.ring-hi{fill:none;stroke:var(--hi);stroke-width:1.3}
+.link{stroke:var(--hi);stroke-width:.7;stroke-dasharray:1.6 1.2;fill:none}
+.t-label{font-family:var(--f-display);font-weight:600;font-size:5px;pointer-events:none}
+
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;min-height:34px}
+.chip{flex:none;display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-variant-numeric:tabular-nums;font-size:14px}
+.chip b{font-family:var(--f-display);font-size:17px}
+.chip i{font-style:normal;color:var(--muted);font-size:12px}
+.hint{color:var(--muted);font-size:14px;align-self:center}
+.prev{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{font-family:var(--f-display);font-weight:600;font-size:18px;letter-spacing:.02em;padding:13px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.warn{color:var(--called);border-color:var(--called)}
+.btn.warn.armed{background:var(--called);color:#fff}
+.btn.wide{grid-column:1 / -1}
+.btn.small{font-size:15px;padding:7px 12px;border-radius:8px}
+.btn:focus-visible,.row:focus-visible,.tab:focus-visible,.key:focus-visible{outline:2px solid var(--actual);outline-offset:2px}
+
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.tile small{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tile b{font-family:var(--f-display);font-weight:700;font-size:24px;font-variant-numeric:tabular-nums}
+.tile.c b{color:var(--called)} .tile.a b{color:var(--actual)}
+@media (max-width:420px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+.note p{margin:0} .note p+p{margin-top:4px}
+
+.tabs{display:flex;gap:6px;overflow-x:auto}
+.tab{flex:none;font-family:var(--f-display);font-weight:600;font-size:16px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab .open{color:var(--called)}
+
+.legend{display:flex;gap:16px;font-size:13px;color:var(--muted);justify-content:center}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.legend .lc::before{background:var(--called)} .legend .la::before{background:var(--actual)}
+
+.keypad{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.key{font-family:var(--f-display);font-weight:600;font-size:20px;padding:9px 0;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
+.key.on{background:var(--actual);color:#fff;border-color:var(--actual)}
+.kp-label{font-size:13px;color:var(--muted)}
+
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.row{display:grid;grid-template-columns:44px 1fr 1fr 56px;align-items:center;gap:8px;padding:9px 12px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;font-variant-numeric:tabular-nums}
+.row:first-child{border-top:0}
+.row.th{cursor:default;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-block:7px}
+.row.sel{background:color-mix(in srgb,var(--hi) 22%,transparent)}
+.row .n{font-family:var(--f-display);font-weight:600;color:var(--muted)}
+.row .v{font-family:var(--f-display);font-weight:600;font-size:19px}
+.row .v.c{color:var(--called)} .row .v.a{color:var(--actual)}
+.row .d{font-family:var(--f-display);font-weight:600;font-size:17px;text-align:right}
+.pos{color:var(--good)} .neg{color:var(--called)} .zero{color:var(--muted)}
+h2{margin:6px 0 0;font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+.hrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:12px;border-top:1px solid var(--line)}
+.hrow:first-child{border-top:0}
+.hrow .info{min-width:0;cursor:pointer;background:none;border:0;padding:0;text-align:left;color:var(--ink);font:inherit}
+.hrow .info b{font-family:var(--f-display);font-size:19px;font-weight:600;display:block}
+.hrow .info span{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.empty{padding:24px 12px;text-align:center;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.btn,.key,.tab{transition:background .12s,color .12s}}
+</style>
+
+</head>
+<body>
+<div class="app">
+
+<!-- TRAINING -->
+<section id="vTrain">
+  <div class="top"><span class="brand">Schiesstrainer</span><button class="btn small" id="toHist">Verlauf</button></div>
+  <div class="head">
+    <div><h1 id="tPasse">Passe 1</h1><div class="sub" id="tSub">0 Schuss · 0 Ringe</div></div>
+    <div class="live" id="tLive"><small>Ansage</small>–</div>
+  </div>
+  <div class="target" id="tWrap"><svg id="tSvg" aria-label="Scheibe, tippen um Schuss einzutragen"></svg></div>
+  <div class="chips" id="tChips"></div>
+  <div class="prev" id="tPrev"></div>
+  <div class="btns">
+    <button class="btn" id="bUndo">Rückgängig</button>
+    <button class="btn primary" id="bClose">Passe abschliessen</button>
+    <button class="btn warn wide" id="bEnd">Training beenden</button>
+  </div>
+</section>
+
+<!-- AUSWERTUNG -->
+<section id="vEval" hidden>
+  <div class="top"><button class="btn small" id="eToHist">← Verlauf</button><button class="btn small" id="eNew">Neues Training</button></div>
+  <div class="head"><div><h1>Auswertung</h1><div class="sub" id="eDate"></div></div></div>
+  <div class="tiles" id="eTiles"></div>
+  <div class="note" id="eNote"></div>
+  <div class="tabs" id="eTabs" role="tablist"></div>
+  <div class="target" id="eWrap"><svg id="eSvg" aria-label="Scheibe, tippen um tatsächlichen Treffer einzutragen"></svg></div>
+  <div class="legend"><span class="lc">Angesagt</span><span class="la">Tatsächlich</span></div>
+  <div class="kp-label" id="eKpLabel"></div>
+  <div class="keypad" id="eKeys"></div>
+  <div class="list" id="eShots"></div>
+  <h2>Passen</h2>
+  <div class="list" id="ePasses"></div>
+</section>
+
+<!-- VERLAUF -->
+<section id="vHist" hidden>
+  <div class="top"><span class="brand">Schiesstrainer</span><button class="btn small" id="hTrain">Zum Training</button></div>
+  <div class="head"><div><h1>Verlauf</h1><div class="sub">Abgeschlossene Trainings, neueste zuerst</div></div></div>
+  <div class="list" id="hList"></div>
+</section>
+
+</div>
+
+<script>
+(function(){
+const NS='http://www.w3.org/2000/svg';
+const $=s=>document.querySelector(s);
+const S={cur:null,hist:[],evalId:null,ep:0,sel:0,armEnd:false,armDel:null};
+
+/* ---------- Speicher ---------- */
+function load(){
+  try{S.cur=JSON.parse(localStorage.getItem('st_cur'))}catch(e){S.cur=null}
+  try{S.hist=JSON.parse(localStorage.getItem('st_hist'))||[]}catch(e){S.hist=[]}
+}
+function save(){
+  try{localStorage.setItem('st_cur',JSON.stringify(S.cur));localStorage.setItem('st_hist',JSON.stringify(S.hist))}catch(e){}
+}
+function newSession(){S.cur={id:Date.now().toString(36),start:Date.now(),passes:[{shots:[]}]};save()}
+
+/* ---------- Scheibe ---------- */
+// 10 Ringe, Ringbreite 10 Einheiten: Ring 1 = Radius 100, Ring 10 = Radius 10
+function ringOf(x,y){const d=Math.hypot(x,y);if(d>100)return 0;return Math.min(10,11-Math.ceil(d/10))}
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+function buildTarget(svg){
+  svg.setAttribute('viewBox','-112 -112 224 224');
+  el('rect',{x:-112,y:-112,width:224,height:224,style:'fill:var(--t-paper)'},svg);
+  for(let k=1;k<=10;k++){
+    const r=(11-k)*10,black=k>=4;
+    el('circle',{cx:0,cy:0,r,style:`fill:${black?'var(--t-black)':'var(--t-paper)'};stroke:${k>=5?'var(--t-line-light)':'var(--t-line-dark)'};stroke-width:.5`},svg);
+  }
+  for(let k=1;k<=8;k++){
+    const m=(11-k)*10-5,col=k>=4?'var(--t-line-light)':'var(--t-line-dark)';
+    [[m,0],[-m,0],[0,m],[0,-m]].forEach(([x,y])=>{
+      const t=el('text',{x,y,'text-anchor':'middle','dominant-baseline':'central',class:'t-label',style:`fill:${col}`},svg);t.textContent=k;
+    });
+  }
+  return el('g',{},svg);
+}
+function marker(layer,x,y,label,kind,o={}){
+  const g=el('g',{class:'mk '+kind+(o.ghost?' ghost':'')},layer);
+  if(o.sel)el('circle',{cx:x,cy:y,r:6,class:'ring-hi'},g);
+  el('circle',{cx:x,cy:y,r:3.4,class:'dot'},g);
+  if(label!=null){const t=el('text',{x,y:y+.15,'text-anchor':'middle','dominant-baseline':'central'},g);t.textContent=label}
+}
+function targetInput(svg,{move,commit}){
+  let active=false,pid=null;
+  const pt=e=>{const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());
+    const c=v=>Math.round(Math.max(-112,Math.min(112,v))*10)/10;return{x:c(p.x),y:c(p.y)}};
+  svg.addEventListener('pointerdown',e=>{active=true;pid=e.pointerId;try{svg.setPointerCapture(pid)}catch(_){}move(pt(e));e.preventDefault()});
+  svg.addEventListener('pointermove',e=>{if(active&&e.pointerId===pid)move(pt(e))});
+  svg.addEventListener('pointerup',e=>{if(active&&e.pointerId===pid){active=false;commit(pt(e))}});
+  svg.addEventListener('pointercancel',()=>{active=false;move(null)});
+}
+const tLayer=buildTarget($('#tSvg')), eLayer=buildTarget($('#eSvg'));
+
+/* ---------- Ansichten ---------- */
+function show(v){
+  $('#vTrain').hidden=v!=='train';$('#vEval').hidden=v!=='eval';$('#vHist').hidden=v!=='hist';
+  if(v==='train')renderTrain();if(v==='eval')renderEval();if(v==='hist')renderHist();
+  window.scrollTo(0,0);
+}
+const sum=a=>a.reduce((s,v)=>s+v,0);
+const fmt1=v=>v.toFixed(1).replace('.',',').replace('-','−');
+const signed=v=>v>0?'+'+v:v<0?'−'+Math.abs(v):'0';
+const fmtDate=t=>new Date(t).toLocaleString('de-CH',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+/* ---------- Training ---------- */
+let preview=null;
+function renderTrain(){
+  const s=S.cur,pi=s.passes.length-1,p=s.passes[pi];
+  $('#tPasse').textContent='Passe '+(pi+1);
+  $('#tSub').textContent=`${p.shots.length} Schuss · ${sum(p.shots.map(x=>x.r))} Ringe`;
+  $('#tLive').innerHTML='<small>Ansage</small>'+(preview?ringOf(preview.x,preview.y):(p.shots.length?p.shots[p.shots.length-1].r:'–'));
+  tLayer.innerHTML='';
+  p.shots.forEach((sh,i)=>marker(tLayer,sh.x,sh.y,i+1,'called'));
+  if(preview)marker(tLayer,preview.x,preview.y,p.shots.length+1,'called',{ghost:true,sel:true});
+  $('#tChips').innerHTML=p.shots.length?p.shots.map((sh,i)=>`<span class="chip"><i>${i+1}</i><b>${sh.r}</b></span>`).join(''):'<span class="hint">Auf die Scheibe tippen, wo du den Schuss gesehen hast. Ziehen zum Korrigieren.</span>';
+  const done=s.passes.slice(0,-1);
+  $('#tPrev').textContent=done.length?done.map((q,i)=>`P${i+1}: ${sum(q.shots.map(x=>x.r))} (${q.shots.length})`).join(' · ')+` · Total ${sum(done.map(q=>sum(q.shots.map(x=>x.r))))+sum(p.shots.map(x=>x.r))}`:'';
+  $('#bUndo').disabled=!p.shots.length&&s.passes.length<2;
+  $('#bClose').disabled=!p.shots.length;
+  const b=$('#bEnd');b.classList.toggle('armed',S.armEnd);b.textContent=S.armEnd?'Nochmals tippen zum Beenden':'Training beenden';
+}
+targetInput($('#tSvg'),{
+  move:p=>{preview=p;renderTrain()},
+  commit:p=>{preview=null;const pa=S.cur.passes[S.cur.passes.length-1];pa.shots.push({x:p.x,y:p.y,r:ringOf(p.x,p.y)});save();renderTrain()}
+});
+$('#bUndo').onclick=()=>{
+  const ps=S.cur.passes,p=ps[ps.length-1];
+  if(p.shots.length)p.shots.pop();else if(ps.length>1)ps.pop();
+  save();renderTrain();
+};
+$('#bClose').onclick=()=>{S.cur.passes.push({shots:[]});save();renderTrain()};
+let endTimer=null;
+$('#bEnd').onclick=()=>{
+  if(!S.armEnd){S.armEnd=true;renderTrain();clearTimeout(endTimer);endTimer=setTimeout(()=>{S.armEnd=false;renderTrain()},3500);return}
+  S.armEnd=false;clearTimeout(endTimer);
+  const s=S.cur;s.passes=s.passes.filter(q=>q.shots.length);
+  if(!s.passes.length){newSession();renderTrain();return}
+  s.end=Date.now();S.hist.unshift(s);S.cur=null;save();openEval(s.id);
+};
+$('#toHist').onclick=()=>show('hist');
+
+/* ---------- Auswertung ---------- */
+function sess(){return S.hist.find(h=>h.id===S.evalId)}
+function firstOpen(s,from){
+  for(let pi=from;pi<s.passes.length;pi++){const i=s.passes[pi].shots.findIndex(x=>x.a==null);if(i>=0)return[pi,i]}
+  for(let pi=0;pi<from;pi++){const i=s.passes[pi].shots.findIndex(x=>x.a==null);if(i>=0)return[pi,i]}
+  return null;
+}
+function openEval(id){S.evalId=id;const s=sess();const f=firstOpen(s,0);S.ep=f?f[0]:0;S.sel=f?f[1]:0;show('eval')}
+function advance(){
+  const s=sess(),p=s.passes[S.ep];
+  const i=p.shots.findIndex((x,k)=>k>S.sel&&x.a==null);
+  if(i>=0){S.sel=i;return}
+  const j=p.shots.findIndex(x=>x.a==null);
+  if(j>=0){S.sel=j;return}
+  const f=firstOpen(s,S.ep+1);if(f){S.ep=f[0];S.sel=f[1]}
+}
+let ePrev=null;
+function renderEval(){
+  const s=sess();if(!s){show('hist');return}
+  $('#eDate').textContent=fmtDate(s.start);
+  const all=s.passes.flatMap(p=>p.shots),filled=all.filter(x=>x.a!=null);
+  const called=sum(all.map(x=>x.r));
+  const diffs=filled.map(x=>x.a-x.r);
+  const complete=filled.length===all.length;
+  const tiles=[
+    ['c','Ansage',called],
+    ['a','Resultat',complete?sum(filled.map(x=>x.a)):`${filled.length}/${all.length}`],
+    ['','Ø Abweichung',filled.length?fmt1(sum(diffs.map(Math.abs))/filled.length):'–'],
+    ['','Ansage exakt',filled.length?Math.round(100*diffs.filter(d=>d===0).length/filled.length)+' %':'–']
+  ];
+  $('#eTiles').innerHTML=tiles.map(([c,l,v])=>`<div class="tile ${c}"><small>${l}</small><b>${v}</b></div>`).join('');
+
+  // Text-Auswertung
+  const lines=[];
+  if(!filled.length)lines.push('Wähle unten einen Schuss und tippe auf der Scheibe, wo er tatsächlich sitzt, oder wähle nur den Ring.');
+  else{
+    const bias=sum(diffs)/filled.length,w1=Math.round(100*diffs.filter(d=>Math.abs(d)<=1).length/filled.length);
+    if(Math.abs(bias)<0.15)lines.push(`Ansage und Resultat liegen im Schnitt gleich auf. ${w1} % der Ansagen innerhalb ±1 Ring.`);
+    else lines.push(`Deine Ansage liegt im Schnitt <b>${fmt1(Math.abs(bias))} Ringe ${bias<0?'über':'unter'}</b> dem Resultat. ${w1} % der Ansagen innerhalb ±1 Ring.`);
+    const pos=filled.filter(x=>x.ax!=null);
+    if(pos.length){
+      const dx=sum(pos.map(x=>x.ax-x.x))/pos.length/10,dy=sum(pos.map(x=>x.ay-x.y))/pos.length/10;
+      const parts=[];
+      if(Math.abs(dx)>=0.1)parts.push(`${fmt1(Math.abs(dx))} ${dx>0?'rechts':'links'}`);
+      if(Math.abs(dy)>=0.1)parts.push(`${fmt1(Math.abs(dy))} ${dy>0?'tief':'hoch'}`);
+      const dist=sum(pos.map(x=>Math.hypot(x.ax-x.x,x.ay-x.y)))/pos.length/10;
+      lines.push(`Treffer sitzen gegenüber der Ansage im Mittel ${parts.length?parts.join(' und '):'ohne Richtungstendenz'} (in Ringbreiten, ${pos.length} Schuss mit Lage). Ø Abstand Ansage–Treffer: ${fmt1(dist)} Ringbreiten.`);
+    }
+  }
+  $('#eNote').innerHTML=lines.map(l=>`<p>${l}</p>`).join('');
+
+  // Tabs
+  $('#eTabs').innerHTML=s.passes.map((p,i)=>{const open=p.shots.some(x=>x.a==null);
+    return `<button class="tab" role="tab" aria-selected="${i===S.ep}" data-p="${i}">P${i+1}${open?' <span class="open">•</span>':''}</button>`}).join('');
+
+  // Scheibe
+  const p=s.passes[S.ep];
+  eLayer.innerHTML='';
+  p.shots.forEach((sh,i)=>{
+    const ax=(i===S.sel&&ePrev)?ePrev.x:sh.ax, ay=(i===S.sel&&ePrev)?ePrev.y:sh.ay;
+    if(ax!=null)el('line',{x1:sh.x,y1:sh.y,x2:ax,y2:ay,class:'link'},eLayer);
+  });
+  p.shots.forEach((sh,i)=>marker(eLayer,sh.x,sh.y,i+1,'called',{sel:i===S.sel}));
+  p.shots.forEach((sh,i)=>{
+    if(i===S.sel&&ePrev)marker(eLayer,ePrev.x,ePrev.y,i+1,'actual',{ghost:true});
+    else if(sh.ax!=null)marker(eLayer,sh.ax,sh.ay,i+1,'actual');
+  });
+
+  // Keypad
+  const cur=p.shots[S.sel];
+  $('#eKpLabel').innerHTML=`Schuss ${S.sel+1} von Passe ${S.ep+1}: Treffer auf der Scheibe tippen oder Ring wählen`+(ePrev?` · Ring <b>${ringOf(ePrev.x,ePrev.y)}</b>`:'');
+  $('#eKeys').innerHTML=[10,9,8,7,6,5,4,3,2,1,0].map(v=>`<button class="key${cur&&cur.a===v?' on':''}" data-v="${v}">${v}</button>`).join('')+`<button class="key" data-v="x" title="Eingabe löschen">✕</button>`;
+
+  // Schussliste
+  $('#eShots').innerHTML=`<div class="row th"><span>#</span><span>Angesagt</span><span>Tatsächlich</span><span style="text-align:right">Δ</span></div>`+
+    p.shots.map((sh,i)=>{const d=sh.a!=null?sh.a-sh.r:null;
+      return `<button class="row${i===S.sel?' sel':''}" data-s="${i}"><span class="n">${i+1}</span><span class="v c">${sh.r}</span><span class="v a">${sh.a!=null?sh.a:'–'}</span><span class="d ${d==null?'zero':d>0?'pos':d<0?'neg':'zero'}">${d==null?'':signed(d)}</span></button>`}).join('');
+
+  // Passen-Tabelle
+  $('#ePasses').innerHTML=`<div class="row th"><span>Passe</span><span>Ansage</span><span>Resultat</span><span style="text-align:right">Δ</span></div>`+
+    s.passes.map((q,i)=>{const c=sum(q.shots.map(x=>x.r)),f=q.shots.filter(x=>x.a!=null),done=f.length===q.shots.length,a=sum(f.map(x=>x.a));
+      const d=done?a-c:null;
+      return `<button class="row${i===S.ep?' sel':''}" data-p="${i}"><span class="n">P${i+1}</span><span class="v c">${c}</span><span class="v a">${done?a:f.length+'/'+q.shots.length}</span><span class="d ${d==null?'zero':d>0?'pos':d<0?'neg':'zero'}">${d==null?'':signed(d)}</span></button>`}).join('');
+}
+targetInput($('#eSvg'),{
+  move:p=>{ePrev=p;renderEval()},
+  commit:p=>{ePrev=null;const sh=sess().passes[S.ep].shots[S.sel];if(!sh){renderEval();return}
+    sh.ax=p.x;sh.ay=p.y;sh.a=ringOf(p.x,p.y);save();advance();renderEval()}
+});
+$('#eKeys').onclick=e=>{const b=e.target.closest('.key');if(!b)return;const sh=sess().passes[S.ep].shots[S.sel];if(!sh)return;
+  delete sh.ax;delete sh.ay;
+  if(b.dataset.v==='x'){delete sh.a;save();renderEval();return}
+  sh.a=+b.dataset.v;save();advance();renderEval()};
+$('#eShots').onclick=e=>{const r=e.target.closest('[data-s]');if(!r)return;S.sel=+r.dataset.s;renderEval()};
+const pickPasse=e=>{const r=e.target.closest('[data-p]');if(!r)return;S.ep=+r.dataset.p;const i=sess().passes[S.ep].shots.findIndex(x=>x.a==null);S.sel=i>=0?i:0;renderEval()};
+$('#eTabs').onclick=pickPasse;$('#ePasses').onclick=e=>{pickPasse(e);$('#eTabs').scrollIntoView({block:'start',behavior:'smooth'})};
+$('#eToHist').onclick=()=>show('hist');
+$('#eNew').onclick=()=>{if(!S.cur)newSession();show('train')};
+
+/* ---------- Verlauf ---------- */
+function renderHist(){
+  $('#hTrain').textContent=S.cur&&S.cur.passes.some(p=>p.shots.length)?'Training fortsetzen':'Neues Training';
+  if(!S.hist.length){$('#hList').innerHTML='<div class="empty">Noch kein abgeschlossenes Training.</div>';return}
+  $('#hList').innerHTML=S.hist.map(h=>{
+    const all=h.passes.flatMap(p=>p.shots),f=all.filter(x=>x.a!=null);
+    const res=f.length===all.length?`Resultat ${sum(f.map(x=>x.a))}`:`${f.length}/${all.length} ausgewertet`;
+    return `<div class="hrow"><button class="info" data-o="${h.id}"><b>${fmtDate(h.start)}</b><span>${h.passes.length} Passen · ${all.length} Schuss · Ansage ${sum(all.map(x=>x.r))} · ${res}</span></button>
+      <button class="btn small warn${S.armDel===h.id?' armed':''}" data-d="${h.id}">${S.armDel===h.id?'Löschen?':'Löschen'}</button></div>`}).join('');
+}
+$('#hList').onclick=e=>{
+  const o=e.target.closest('[data-o]');if(o){openEval(o.dataset.o);return}
+  const d=e.target.closest('[data-d]');if(!d)return;
+  if(S.armDel!==d.dataset.d){S.armDel=d.dataset.d;renderHist();return}
+  S.hist=S.hist.filter(h=>h.id!==d.dataset.d);S.armDel=null;save();renderHist();
+};
+$('#hTrain').onclick=()=>{if(!S.cur)newSession();show('train')};
+
+/* ---------- Start ---------- */
+load();
+if(!S.cur)newSession();
+show('train');
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>
